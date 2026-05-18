@@ -6,19 +6,20 @@ from .views import (
     UserProfileDetailView,
     GenerateCodeView,
     WorkoutViewSet,  # შემოგვაქვს ახალი ვიუები
-    ExerciseViewSet
+    ExerciseViewSet, SetViewSet
 )
 
 # ვქმნით როუტერს და ვარეგისტრირებთ ჩვენს ViewSet-ებს
 router = DefaultRouter()
 router.register(r'workouts', WorkoutViewSet, basename='workout')
 router.register(r'exercises', ExerciseViewSet, basename='exercise')
+router.register(r'sets', SetViewSet, basename='set')
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='auth_register'),
     path('login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('profile/<int:pk>/', UserProfileDetailView.as_view(), name='user_profile'),
+    path('profile/me/', UserProfileDetailView.as_view(), name='user_profile'),
     path('generate-code/', GenerateCodeView.as_view(), name='generate_code'),
     path('', include(router.urls)),
 ]

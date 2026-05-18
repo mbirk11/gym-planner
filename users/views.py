@@ -6,8 +6,8 @@ from django.core.cache import cache
 from django.contrib.auth import get_user_model
 from drf_spectacular.utils import extend_schema
 
-from .serializers import RegisterSerializer, UserProfileSerializer, WorkoutSerializer, ExerciseSerializer
-from .models import Workout, Exercise
+from .serializers import RegisterSerializer, UserProfileSerializer, WorkoutSerializer, ExerciseSerializer, SetSerializer
+from .models import Workout, Exercise, Set
 from .permissions import IsOwnerOnly
 
 User = get_user_model()
@@ -28,9 +28,11 @@ class RegisterView(APIView):
 
 # 2. პროფილის CRUD (Generic View - RetrieveUpdateDestroy)
 class UserProfileDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = User.objects.all()
     serializer_class = UserProfileSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwnerOnly]
+
+    def get_object(self):
+        return self.request.user
 
 
 # 3. Redis 4-ნიშნა კოდის გენერაცია (APIView)
@@ -57,9 +59,12 @@ class WorkoutViewSet(viewsets.ModelViewSet):
     #აქედან მომხმარებლები ნახავენ სხვების ვარჯიშებს და ჩაწერენ თავისას.
     #IsAuthenticatedOrReadOnly ნიშნავს: ნახვა შეუძლია ყველას, ჩაწერა მხოლოდ სისტემაში შესულს.
 
-    queryset = Workout.objects.all().order_by('-date')
+
     serializer_class = WorkoutSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        return Workout.objects.filter(user=self.request.user).order_by('-date')
 
     def perform_create(self, serializer):
         # ვარჯიშის შექმნისას, ბაზაში იუზერის ველში ავტომატურად ჩაიწერება ის, ვინც სისტემაშია შესული
@@ -73,3 +78,10 @@ class ExerciseViewSet(viewsets.ModelViewSet):
     queryset = Exercise.objects.all()
     serializer_class = ExerciseSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+class SetViewSet(viewsets.ModelViewSet):
+    serializer_class = SetSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Set.objects.filter(workout__user=self.request.user)
