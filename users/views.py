@@ -15,6 +15,8 @@ from .serializers import (
     WorkoutSerializer,
     ExerciseSerializer,
     SetSerializer,
+    PasswordResetRequestSerializer,
+    PasswordResetConfirmSerializer,
 )
 
 User = get_user_model()
@@ -93,3 +95,56 @@ class SetViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return Set.objects.filter(workout__user=self.request.user)
+
+@extend_schema(tags=["Password Reset"])
+class PasswordResetRequestView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    @extend_schema(request=PasswordResetRequestSerializer)
+    def post(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data["email"]
+        user = User.objects.filter(email=email).first()
+
+        if user:
+            code = str(random.randint(1000, 9999))
+            cache.set(f"password_reset_{user.id}", code, timeout=3600)
+
+            return Response({
+                "message": "Password reset code generated.",
+                "code": code
+            })
+
+        return Response({"message": "If this email exists, code was generated."})
+
+
+@extend_schema(tags=["Password Reset"])
+class PasswordResetConfirmView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    @extend_schema(request=PasswordResetConfirmSerializer)
+    def post(self, request):
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data["email"]
+        code = serializer.validated_data["code"]
+        new_password = serializer.validated_data["new_password"]
+
+        user = User.objects.filter(email=email).first()
+
+        if not user:
+            return Response({"error": "User not found."}, status=404)
+
+        saved_code = cache.get(f"password_reset_{user.id}")
+
+        if saved_code != code:
+            return Response({"error": "Invalid or expired code."}, status=400)
+
+        user.set_password(new_password)
+        user.save()
+        cache.delete(f"password_reset_{user.id}")
+
+        return Response({"message": "Password changed successfully."})

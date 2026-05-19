@@ -6,7 +6,10 @@ from .views import (
     UserProfileDetailView,
     GenerateCodeView,
     WorkoutViewSet,  # შემოგვაქვს ახალი ვიუები
-    ExerciseViewSet, SetViewSet
+    ExerciseViewSet,
+    SetViewSet,
+    PasswordResetRequestView,
+    PasswordResetConfirmView,
 )
 
 # ვქმნით როუტერს და ვარეგისტრირებთ ჩვენს ViewSet-ებს
@@ -22,4 +25,6 @@ urlpatterns = [
     path('profile/me/', UserProfileDetailView.as_view(), name='user_profile'),
     path('generate-code/', GenerateCodeView.as_view(), name='generate_code'),
     path('', include(router.urls)),
+    path("password-reset/request/", PasswordResetRequestView.as_view(), name="password_reset_request"),
+    path("password-reset/confirm/", PasswordResetConfirmView.as_view(), name="password_reset_confirm"),
 ]

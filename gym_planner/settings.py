@@ -78,6 +78,11 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'API documentation for gym progress tracker',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
+    'SECURITY': [
+        {
+            'jwtAuth': []
+        }
+    ],
 }
 
 MIDDLEWARE = [

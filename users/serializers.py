@@ -33,7 +33,7 @@ class SetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Set
-        fields = ['id', 'exercise', 'exercise_name', 'weight', 'reps']
+        fields = ['id','workout','exercise', 'exercise_name', 'weight', 'reps']
 
 class WorkoutSerializer(serializers.ModelSerializer):
     sets = SetSerializer(many=True, read_only=True)
@@ -43,3 +43,12 @@ class WorkoutSerializer(serializers.ModelSerializer):
         model = Workout
         fields = ['id', 'user', 'username', 'date', 'notes', 'sets']
         read_only_fields = ['user']
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    code = serializers.CharField(max_length=4)
+    new_password = serializers.CharField(write_only=True, min_length=8)
